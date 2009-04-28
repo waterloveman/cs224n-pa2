@@ -8,11 +8,12 @@ import java.util.ArrayList;
    * Simple alignment baseline which maps french positions to english positions.
    * If the french sentence is longer, all final word map to null.
    */
-public class Model1WordAligner extends WordAligner {
+public class Model2WordAligner extends WordAligner {
     
     private CounterMap<String,String> transProb;
     private Counter<String> englishCount;
     private Counter<String> frenchCount;
+    private Counter<Integer> dparam;
     private String NULL_STRING = "<NULL>";
 
     
@@ -94,29 +95,48 @@ public class Model1WordAligner extends WordAligner {
 	    }
 	}
 
+	//itialize dparam
+	for(int i = -5; i <= 5; i++)
+	    dparam.setCount(i, 1.0/11);
+
+
 	int frenchSize = frenchCount.keySet().size();
 
 	for(int i = 0; i < 10; i++){
 	    System.out.println(i);
 	    CounterMap<String, String> count = new CounterMap<String, String>();
+	    Counter<Integer> dcount = new CounterMap<String, String>();
 	    Counter<String> total = new Counter<String>();
+	    int dtotal = 0;
 
 	    for(SentencePair pair: trainingPairs){
 		Counter<String> total_s = new Counter<String>();
 		List<String> engWords = pair.getEnglishWords();		
 		List<String> freWords = pair.getFrenchWords();
+		
+		int I = freWords.length();
+		int J = engWords.length();
 
-		for(String fre : freWords){
+		for(int i = 0; i < I; i++){
+		    String fre = freWords.get(i);
 		    total_s.setCount(fre, 0.0);
-		    for(String eng : engWords)
-			total_s.incrementCount(fre, transHelper(i, eng, fre, frenchSize));
+		    for(int j = 0; j < J; j++){
+			String eng = engWords.get(j);
+			total_s.incrementCount(fre, transHelper(i, eng, fre, frenchSize) * 
+					       dparam(bucket(i, j, I, J)));
+		    }
 		}
 		
-		for(String fre : freWords)
-		    for(String eng : engWords){
-			count.incrementCount(eng, fre,  transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
-			total.incrementCount(eng, transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
-		    }			 
+		for(int i = 0; i < I; i++){//String fre : freWords)
+		    String fre = freWords.get(i);
+		    for(int j = 0; j < J; j++){
+			String eng = engWords.get(j);
+			double c = transHelper(i, eng, fre, frenchSize) * 
+			    dparam(i, j, I, J) / total_s.getCount(fre);
+			count.incrementCount(eng, fre, c);
+			total.incrementCount(eng, c);
+		    }
+		}			 
 	    }
 
 	    transProb = new CounterMap<String, String>();
@@ -127,6 +147,11 @@ public class Model1WordAligner extends WordAligner {
 	    }
 	}	
     }    
+
+    private int bucket(int i, int j, int I, int J){
+	double val = j - (double)i * J / I;
+	return Math.min(5, Math.max(-5, (int) val));
+    }
 
     private double transHelper(int iter, String eng, String fre, int frenchSize){
 	if(iter == 0)
