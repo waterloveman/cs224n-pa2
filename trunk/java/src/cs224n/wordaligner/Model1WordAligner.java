@@ -30,8 +30,12 @@ public class Model1WordAligner extends WordAligner {
 	    int englishPosition = -1;
 	    double bestProb = -1;
 	    for(int posEngPosition = 0; posEngPosition < numEnglishWords; posEngPosition++){
-		double prob = alignVal(englishWords.get(posEngPosition), 
-				       frenchWords.get(frenchPosition));
+		double mult = 1;
+		mult = (posEngPosition == 0 ? .2 : .8 / numEnglishWords);
+		double prob = mult * alignVal(englishWords.get(posEngPosition), 
+					      frenchWords.get(frenchPosition));
+		if(englishWords.get(posEngPosition).equals(frenchWords.get(frenchPosition)))
+		    prob = 1;
 
 		if(prob > bestProb){
 		    englishPosition = posEngPosition;
@@ -65,8 +69,6 @@ public class Model1WordAligner extends WordAligner {
 	englishCount = new Counter<String>();
 	frenchCount = new Counter<String>();
 	
-	CounterMap<String, String> count = new CounterMap<String, String>();
-	Counter<String> total = new Counter<String>();
 
 	List<SentencePair> trainingPairs = new ArrayList<SentencePair>();
 
@@ -93,51 +95,44 @@ public class Model1WordAligner extends WordAligner {
 	}
 
 	int frenchSize = frenchCount.keySet().size();
- 	for(String eng : englishCount.keySet()){
- 	    for(String fre : frenchCount.keySet()){
- 		transProb.setCount(eng, fre, 1.0 / frenchSize);
- 	    }
- 	}
 
 	for(int i = 0; i < 10; i++){
 	    System.out.println(i);
-	    for(String eng : englishCount.keySet()){
-		total.setCount(eng, 0);
-		for(String fre : frenchCount.keySet()){
-		    count.setCount(eng, fre, 0);
-		}
-	    }
+	    CounterMap<String, String> count = new CounterMap<String, String>();
+	    Counter<String> total = new Counter<String>();
 
 	    for(SentencePair pair: trainingPairs){
 		Counter<String> total_s = new Counter<String>();
-		List<String> engWords = pair.getEnglishWords();
-		
+		List<String> engWords = pair.getEnglishWords();		
 		List<String> freWords = pair.getFrenchWords();
 
 		for(String fre : freWords){
 		    total_s.setCount(fre, 0.0);
 		    for(String eng : engWords)
-			total_s.incrementCount(fre, transProb.getCount(eng, fre));
+			total_s.incrementCount(fre, transHelper(i, eng, fre, frenchSize));
 		}
 		
 		for(String fre : freWords)
 		    for(String eng : engWords){
-			count.incrementCount(eng, fre, transProb.getCount(eng, fre) / total_s.getCount(fre));
-			total.incrementCount(eng, transProb.getCount(eng, fre) / total_s.getCount(fre));
+			count.incrementCount(eng, fre,  transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
+			total.incrementCount(eng, transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
 		    }			 
 	    }
 
-	    for(String eng : englishCount.keySet()){
+	    transProb = new CounterMap<String, String>();
+	    for(String eng : count.keySet()){
 		double engTotal = total.getCount(eng);
-		for(String fre : frenchCount.keySet())
+		for(String fre : count.getCounter(eng).keySet())
 		    transProb.setCount(eng, fre, count.getCount(eng, fre) / engTotal);
 	    }
 	}	
-	//for(String fre : frenchCount.keySet())
-	//  for(String eng : englishCount.keySet())
-	//System.out.println(fre + " " + eng + " " + transProb.getCount(eng, fre));
+    }    
 
+    private double transHelper(int iter, String eng, String fre, int frenchSize){
+	if(iter == 0)
+	    return 1.0 / frenchSize;//1.0 / frenchCount.keySet().size();
+	return transProb.getCount(eng, fre);
     }
-    
+
 }
 
