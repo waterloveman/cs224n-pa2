@@ -110,13 +110,11 @@ public class Model1WordAligner extends WordAligner {
 		    total_s.setCount(fre, 0.0);
 		    for(String eng : engWords)
 			total_s.incrementCount(fre, transHelper(i, eng, fre, frenchSize));
-		}
-		
-		for(String fre : freWords)
 		    for(String eng : engWords){
 			count.incrementCount(eng, fre,  transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
 			total.incrementCount(eng, transHelper(i, eng, fre, frenchSize) / total_s.getCount(fre));
-		    }			 
+		    }			
+		}		
 	    }
 
 	    transProb = new CounterMap<String, String>();
