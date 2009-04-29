@@ -5,9 +5,9 @@ export PATH=/usr/pubsw/bin:$PATH
 java -server -mx2000m -cp classes \
     cs224n.assignments.WordAlignmentTester \
     -path /afs/ir/class/cs224n/pa2/data/ \
-    -model cs224n.wordaligner.Model1WordAligner \
+    -model cs224n.wordaligner.Model2WordAligner \
     -data test \
-    -sentences 100000 \
+    -sentences 1000 \
     -verbose
 
   $@
