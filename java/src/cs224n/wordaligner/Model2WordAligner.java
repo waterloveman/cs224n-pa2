@@ -37,8 +37,8 @@ public class Model2WordAligner extends WordAligner {
 		String eng = englishWords.get(j);
 		double mult = posProb(i, j, I, J);
 		double prob = mult * alignVal(eng, fre);
-
-		tprob *= Math.pow(10, -Math.abs(eng.length() - fre.length()));
+		
+		prob *= Math.exp(-Math.abs(eng.length() - fre.length()));
 
 		if(fre.equals(eng))
 		    prob = 1;
