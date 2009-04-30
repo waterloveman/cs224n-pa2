@@ -30,16 +30,14 @@ public class Model2WordAligner extends WordAligner {
 
 	for (int i = 0; i < I; i++) {
 	    String fre = frenchWords.get(i);
-
+	    double tprob = 1.0;
 	    int bestj = -1;
 	    double bestProb = -1;
 	    for(int j = 0; j < J; j++){
 		String eng = englishWords.get(j);
 		double mult = posProb(i, j, I, J);
 		double prob = mult * alignVal(eng, fre);
-		
 		prob *= Math.exp(-Math.abs(eng.length() - fre.length()));
-
 		if(fre.equals(eng))
 		    prob = 1;
 
@@ -60,6 +58,8 @@ public class Model2WordAligner extends WordAligner {
     
     
     public double getAlignmentProb(List<String> targetSentence, List<String> sourceSentence, Alignment alignment) { 
+   
+	
 	return 0; 
     }
     

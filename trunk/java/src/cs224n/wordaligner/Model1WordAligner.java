@@ -4,6 +4,8 @@ import cs224n.util.*;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.io.*;
+
 /**
    * Simple alignment baseline which maps french positions to english positions.
    * If the french sentence is longer, all final word map to null.
@@ -54,7 +56,25 @@ public class Model1WordAligner extends WordAligner {
     
     
     public double getAlignmentProb(List<String> targetSentence, List<String> sourceSentence, Alignment alignment) { 
-	return 0; 
+	double p = 1;
+	
+	for(Pair<Integer, Integer> align : alignment.getSureAlignments()){
+	    int frnAlign = align.getSecond();
+	    int engAlign = align.getFirst();
+	    String eng = (engAlign < 0)?NULL_STRING:targetSentence.get(engAlign);
+	    String frn = (frnAlign < 0)?NULL_STRING:sourceSentence.get(frnAlign);
+	    //System.out.println("("+frnAlign+","+engAlign+")  French: " + frn + "   English: " + eng + " P : " + alignVal(eng,frn));
+	    //System.out.println(alignment.toString());
+	    p*= alignVal(eng,frn);
+	}
+
+	/*
+	  for(String french : targetSentence){
+	    p = 1/(sourceSentence.size() + 1);
+	}
+	*/
+	//System.out.println("PROB:   "+p);
+	return p; 
     }
     
     
