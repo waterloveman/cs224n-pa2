@@ -13,16 +13,16 @@ import java.io.*;
 public class Model1WordAligner extends WordAligner {
     
     private CounterMap<String,String> transProb;
+    private CounterMap<String, String> transProbTemp;
     private Counter<String> englishCount;
     private Counter<String> frenchCount;
-    private String NULL_STRING = "<NULL>";
-
+    private int totalFrenchSize;
     
     public Alignment alignSentencePair(SentencePair sentencePair) {
 	Alignment alignment = new Alignment();
 	
 	List<String> englishWords = new ArrayList<String>(sentencePair.getEnglishWords());
-	englishWords.add(0, NULL_STRING);
+	englishWords.add(0, NULL_WORD);
 	List<String> frenchWords = sentencePair.getFrenchWords();
 
 	int numFrenchWords = frenchWords.size();
@@ -51,40 +51,36 @@ public class Model1WordAligner extends WordAligner {
     }
     
     private double alignVal(String englishStr, String frenchStr){
-	return transProb.getCount(englishStr, frenchStr);
+	double ret = transProb.getCount(englishStr, frenchStr);
+	return ret;
     }
     
     
     public double getAlignmentProb(List<String> targetSentence, List<String> sourceSentence, Alignment alignment) { 
 	double p = 1;
-	
+
+	int numEnglishWords = targetSentence.size();
+
 	for(Pair<Integer, Integer> align : alignment.getSureAlignments()){
 	    int frnAlign = align.getSecond();
 	    int engAlign = align.getFirst();
-	    String eng = (engAlign < 0)?NULL_STRING:targetSentence.get(engAlign);
-	    String frn = (frnAlign < 0)?NULL_STRING:sourceSentence.get(frnAlign);
-	    //System.out.println("("+frnAlign+","+engAlign+")  French: " + frn + "   English: " + eng + " P : " + alignVal(eng,frn));
-	    //System.out.println(alignment.toString());
-	    p*= alignVal(eng,frn);
+	    String eng = (engAlign < 0)?NULL_WORD:targetSentence.get(engAlign);
+	    String frn = (frnAlign < 0)?NULL_WORD:sourceSentence.get(frnAlign);
+	    
+	    double mult = (engAlign < 0) ? .2 : .8 / numEnglishWords;
+
+	    p *= (mult * alignVal(eng, frn));
 	}
 
-	/*
-	  for(String french : targetSentence){
-	    p = 1/(sourceSentence.size() + 1);
-	}
-	*/
-	//System.out.println("PROB:   "+p);
 	return p; 
     }
     
     
     public CounterMap<String,String> getProbSourceGivenTarget(){ 
-	return transProb;
+	return transProbTemp;
     }
     
     public void train(List<SentencePair> trainingPairs_) {
-	//things to look at - giving NULL a different alignment prob
-	// - lowering the probability of two words mapping to the same word
 	transProb = new CounterMap<String,String>();
 	englishCount = new Counter<String>();
 	frenchCount = new Counter<String>();
@@ -94,7 +90,7 @@ public class Model1WordAligner extends WordAligner {
 
 	for(SentencePair pair : trainingPairs_){
 	    List<String> engWords = new ArrayList<String>(pair.getEnglishWords());
-	    engWords.add(0, NULL_STRING);
+	    engWords.add(0, NULL_WORD);
 	    List<String> freWords = new ArrayList<String>(pair.getFrenchWords());
 	    trainingPairs.add(new SentencePair(0, "", engWords, freWords));
 	}
@@ -115,6 +111,7 @@ public class Model1WordAligner extends WordAligner {
 	}
 
 	int frenchSize = frenchCount.keySet().size();
+	totalFrenchSize = frenchSize;
 
 	for(int i = 0; i < 10; i++){
 	    System.out.println(i);
@@ -144,11 +141,17 @@ public class Model1WordAligner extends WordAligner {
 		    transProb.setCount(eng, fre, count.getCount(eng, fre) / engTotal);
 	    }
 	}	
+	transProbTemp = new CounterMap<String, String>();
+	for(String eng : transProb.keySet()){
+	    for(String fre: transProb.getCounter(eng).keySet()){
+		transProbTemp.setCount(fre, eng, transProb.getCount(eng, fre));
+	    }
+	}
     }    
 
     private double transHelper(int iter, String eng, String fre, int frenchSize){
 	if(iter == 0)
-	    return 1.0 / frenchSize;//1.0 / frenchCount.keySet().size();
+	    return 1.0 / frenchSize;
 	return transProb.getCount(eng, fre);
     }
 
