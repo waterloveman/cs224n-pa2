@@ -7,7 +7,7 @@ java -server -mx2000m -cp classes \
     -path /afs/ir/class/cs224n/pa2/data/ \
     -model cs224n.wordaligner.Model2WordAligner \
     -data test \
-    -sentences 50000 \
+    -sentences 1000 \
     -verbose
 
   $@

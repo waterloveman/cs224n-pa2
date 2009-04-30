@@ -184,6 +184,7 @@ public class DecoderTester {
                          "\nactual "+languages.getSecond()+" string:\t"+SentenceToString(actualTranslation));
 
       List<String> guessedTranslation = decoder.Decode(sourceSentence);
+
       double dist = EditDistance.getDistance(guessedTranslation,actualTranslation);
       String[] guessed = (String[])guessedTranslation.toArray(new String[guessedTranslation.size()]);
       String[] ref = (String[])actualTranslation.toArray(new String[actualTranslation.size()]);
@@ -197,6 +198,7 @@ public class DecoderTester {
       System.out.println("Edit Distance:\t"+dist+"\nSentence Size:\t"+actualTranslation.size());
       System.out.println();
       // sanity check
+
       if (hypLen != bleu.hypLen || refLen != bleu.refLen) {
         throw new RuntimeException("ERROR");
       }

@@ -6,7 +6,7 @@ export PATH=/usr/pubsw/bin:$PATH
 
 java -server -mx2000m -cp classes \
   cs224n.assignments.DecoderTester \
-  -lmmodel     cs224n.langmodel.EmpiricalUnigramLanguageModel \
+  -lmmodel     cs224n.langmodel.UnigramModel \
   -wamodel     cs224n.wordaligner.Model1WordAligner \
   -lmsentences 1000 \
   -wasentences 1000 \
